@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int           @id @default(autoincrement())
+  email           String        @unique
+  name            String
+  password        String        // Store hashed passwords only!
+  isAdmin         Boolean       @default(false) @map("is_admin")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  
+  // Relations
+  createdEvents   Event[]       @relation("EventCreator")
+  attendingEvents EventAttendee[]
+
+  @@map("users")
+}
+
+model Event {
+  id                Int           @id @default(autoincrement())
+  eventId           String        @unique @map("event_id")
+  titleIs           String?       @map("title_is")
+  titleEn           String?       @map("title_en")
+  textIs            String?       @map("text_is") @db.Text
+  textEn            String?       @map("text_en") @db.Text
+  place             String?
+  formattedAddress  String?       @map("formatted_address")
+  city              String?
+  postal            String?
+  street            String?
+  start             DateTime?
+  end               DateTime?
+  occurrence        String?
+  eventImage        String?       @map("event_image")
+  thumbnailImage    String?       @map("thumbnail_image")
+  accepted          Boolean       @default(false)
+  active            Boolean       @default(false)
+  legacy            Boolean       @default(false)
+  template          Boolean       @default(false)
+  owner             Int?
+  website           String?
+  facebook          String?
+  tickets           String?
+  createdAt         DateTime      @default(now()) @map("created_at")
+  
+  location          EventLocation?
+  tags              EventTag[]
+  image             EventImage?
+  dates             EventDate[]
+
+  // Relations
+  creator User? @relation("EventCreator", fields: [owner], references: [id])
+  attendees EventAttendee[]
+
+  @@map("events")
+}
+
+model EventAttendee {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  eventId   Int      @map("event_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  user      User     @relation(fields: [userId], references: [id])
+  event     Event    @relation(fields: [eventId], references: [id])
+
+  @@unique([userId, eventId]) // Each user can only attend an event once
+  @@map("event_attendees")
+}
+
+model EventLocation {
+  id        Int      @id @default(autoincrement())
+  eventId   Int      @unique @map("event_id")
+  latitude  Decimal  @db.Decimal(10, 8)
+  longitude Decimal  @db.Decimal(11, 8)
+  
+  event     Event    @relation(fields: [eventId], references: [id])
+
+  @@map("event_locations")
+}
+
+model EventTag {
+  id      Int      @id @default(autoincrement())
+  eventId Int      @map("event_id")
+  tag     String
+  
+  event   Event    @relation(fields: [eventId], references: [id])
+
+  @@map("event_tags")
+}
+
+model EventImage {
+  id       Int      @id @default(autoincrement())
+  eventId  Int      @unique @map("event_id")
+  time     Int?
+  path     String?
+  small    String?
+  medium   String?
+  large    String?
+  xlarge   String?
+  original String?
+  imageId  String?  @map("image_id")
+  
+  event    Event    @relation(fields: [eventId], references: [id])
+
+  @@map("event_images")
+}
+
+model EventDate {
+  id      Int       @id @default(autoincrement())
+  eventId Int       @map("event_id")
+  date    DateTime
+  
+  event   Event     @relation(fields: [eventId], references: [id])
+
+  @@map("event_dates")
+}
