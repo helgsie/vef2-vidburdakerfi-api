@@ -1,9 +1,9 @@
 # Viðburðakerfi
 
 ## Tæknistakkur
-Typescript
-Express
-PostgreSQL
-Prisma
-Neon
-Cloudinary
++ Typescript
++ Express
++ PostgreSQL
++ Prisma
++ Neon
++ Cloudinary
