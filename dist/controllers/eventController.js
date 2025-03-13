@@ -12,8 +12,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteEvent = exports.createEvent = exports.getEventById = exports.getEvents = void 0;
+exports.deleteEvent = exports.createEventController = exports.getEventById = exports.getEvents = void 0;
 const prisma_1 = __importDefault(require("../prisma/prisma"));
+const eventService_1 = require("../services/eventService");
 const uuid_1 = require("uuid");
 const getEvents = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -21,6 +22,7 @@ const getEvents = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         res.json(events);
     }
     catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Villa við að sækja viðburði' });
     }
 });
@@ -36,11 +38,12 @@ const getEventById = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         res.json(event);
     }
     catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Villa við að sækja viðburð' });
     }
 });
 exports.getEventById = getEventById;
-const createEvent = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const createEventController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { titleEn, textEn, place, start, end } = req.body;
     try {
         if (!req.user) {
@@ -48,24 +51,24 @@ const createEvent = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             return;
         }
         const eventId = (0, uuid_1.v4)();
-        const event = yield prisma_1.default.event.create({
-            data: {
-                eventId,
-                titleEn,
-                textEn,
-                place,
-                start: new Date(start),
-                end: new Date(end),
-                owner: req.user.id,
-            },
-        });
+        const eventData = {
+            eventId,
+            titleEn,
+            textEn,
+            place,
+            start: new Date(start),
+            end: new Date(end),
+            owner: req.user.id,
+        };
+        const event = yield (0, eventService_1.createEvent)(eventData);
         res.status(201).json(event);
     }
     catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Villa við að búa til viðburð' });
     }
 });
-exports.createEvent = createEvent;
+exports.createEventController = createEventController;
 const deleteEvent = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     try {
@@ -82,6 +85,7 @@ const deleteEvent = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         res.json({ message: 'Viðburði hefur verið eytt' });
     }
     catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Villa við að eyða viðburði' });
     }
 });

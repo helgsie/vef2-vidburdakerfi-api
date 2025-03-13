@@ -26,6 +26,7 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
         req.user = { id: user.id, isAdmin: user.isAdmin };
         next();
     } catch (error) {
+        console.error(error);
         res.status(401).json({ message: 'Rangur token' });
         return;
     }

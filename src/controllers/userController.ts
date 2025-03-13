@@ -23,6 +23,7 @@ export const registerUser = async (req: Request, res: Response) => {
     
         res.status(201).json({ id: user.id, email: user.email, name: user.name });
         } catch (error) {
+            console.error(error);
             res.status(500).json({ message: 'Villa við nýskráningu notanda' });
         }
 };
@@ -47,24 +48,26 @@ export const loginUser = async (req: Request, res: Response) => {
     
         res.json({ id: user.id, email: user.email, name: user.name, token });
         } catch (error) {
+            console.error(error);
             res.status(500).json({ message: 'Villa við innskráningu' });
         }
     };
 
 export const getUserProfile = async (req: AuthRequest, res: Response) => {
     try {
-      const user = await prisma.user.findUnique({
-        where: { id: req.user?.id },
-        select: { id: true, email: true, name: true },
-      });
-  
-      if (!user) {
-        res.status(404).json({ message: 'Notandi ekki fundinn' });
-        return;
-      }
-  
-      res.json(user);
+        const user = await prisma.user.findUnique({
+            where: { id: req.user?.id },
+            select: { id: true, email: true, name: true },
+        });
+    
+        if (!user) {
+            res.status(404).json({ message: 'Notandi ekki fundinn' });
+            return;
+        }
+    
+        res.json(user);
     } catch (error) {
-      res.status(500).json({ message: 'Villa við að sækja prófíl notanda' });
+        console.error(error);
+        res.status(500).json({ message: 'Villa við að sækja prófíl notanda' });
     }
 };

@@ -1,5 +1,5 @@
 import { AuthRequest } from '../middleware/authMiddleware';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import prisma from '../prisma/prisma';
 
 export const attendEvent = async (req: AuthRequest, res: Response) => {
@@ -27,6 +27,7 @@ export const attendEvent = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Notandi hefur verið skráður á viðburð' });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Villa kom upp við skráningu á viðburð' });
   }
 };
@@ -42,6 +43,7 @@ export const getEventAttendees = async (req: AuthRequest, res: Response) => {
 
     res.json(attendees);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Villa við að sækja gestalista' });
   }
 };

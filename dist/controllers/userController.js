@@ -31,6 +31,7 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         res.status(201).json({ id: user.id, email: user.email, name: user.name });
     }
     catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Villa við nýskráningu notanda' });
     }
 });
@@ -52,6 +53,7 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         res.json({ id: user.id, email: user.email, name: user.name, token });
     }
     catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Villa við innskráningu' });
     }
 });
@@ -70,6 +72,7 @@ const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function*
         res.json(user);
     }
     catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Villa við að sækja prófíl notanda' });
     }
 });

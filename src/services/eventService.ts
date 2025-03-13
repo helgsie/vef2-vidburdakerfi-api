@@ -1,5 +1,15 @@
 import prisma from "../prisma/prisma";
 
+interface EventData {
+    titleEn: string;
+    textEn: string;
+    place: string;
+    start: Date;
+    end: Date;
+    owner: number;
+    eventId: string;
+}
+
 export const getAllEvents = async () => {
   return await prisma.event.findMany();
 };
@@ -8,7 +18,7 @@ export const getEventById = async (id: number) => {
   return await prisma.event.findUnique({ where: { id } });
 };
 
-export const createEvent = async (data: any) => {
+export const createEvent = async (data: EventData) => {
   return await prisma.event.create({ data });
 };
 

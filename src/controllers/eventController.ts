@@ -1,6 +1,7 @@
 import { AuthRequest } from '../middleware/authMiddleware';
 import { Request, Response } from 'express';
 import prisma from '../prisma/prisma';
+import { createEvent } from '../services/eventService';
 import { v4 as uuidv4 } from 'uuid';
 
 export const getEvents = async (req: Request, res: Response) => {
@@ -8,6 +9,7 @@ export const getEvents = async (req: Request, res: Response) => {
     const events = await prisma.event.findMany();
     res.json(events);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Villa við að sækja viðburði' });
   }
 };
@@ -25,11 +27,12 @@ export const getEventById = async (req: Request, res: Response) => {
 
     res.json(event);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Villa við að sækja viðburð' });
   }
 };
 
-export const createEvent = async (req: AuthRequest, res: Response) => {
+export const createEventController = async (req: AuthRequest, res: Response) => {
   const { titleEn, textEn, place, start, end } = req.body;
 
   try {
@@ -41,8 +44,7 @@ export const createEvent = async (req: AuthRequest, res: Response) => {
 
     const eventId = uuidv4();
 
-    const event = await prisma.event.create({
-      data: {
+    const eventData = {
         eventId,
         titleEn,
         textEn,
@@ -50,11 +52,13 @@ export const createEvent = async (req: AuthRequest, res: Response) => {
         start: new Date(start),
         end: new Date(end),
         owner: req.user.id,
-      },
-    });
+    };
+
+    const event = await createEvent(eventData);
 
     res.status(201).json(event);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Villa við að búa til viðburð' });
   }
 };
@@ -79,6 +83,7 @@ export const deleteEvent = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Viðburði hefur verið eytt' });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Villa við að eyða viðburði' });
   }
 };

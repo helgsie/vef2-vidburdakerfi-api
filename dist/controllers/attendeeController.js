@@ -36,6 +36,7 @@ const attendEvent = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         res.json({ message: 'Notandi hefur verið skráður á viðburð' });
     }
     catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Villa kom upp við skráningu á viðburð' });
     }
 });
@@ -50,6 +51,7 @@ const getEventAttendees = (req, res) => __awaiter(void 0, void 0, void 0, functi
         res.json(attendees);
     }
     catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Villa við að sækja gestalista' });
     }
 });
