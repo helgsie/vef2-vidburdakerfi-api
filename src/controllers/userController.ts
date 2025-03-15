@@ -1,8 +1,8 @@
-import { AuthRequest } from '../middleware/authMiddleware';
+import { AuthRequest } from '../middleware/authMiddleware.js';
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import prisma from '../prisma/prisma';
+import prisma from '../prisma/prisma.js';
 
 export const registerUser = async (req: Request, res: Response) => {
     const { email, name, password } = req.body;

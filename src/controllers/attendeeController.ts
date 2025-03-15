@@ -1,6 +1,6 @@
-import { AuthRequest } from '../middleware/authMiddleware';
+import { AuthRequest } from '../middleware/authMiddleware.js';
 import { Response } from 'express';
-import prisma from '../prisma/prisma';
+import prisma from '../prisma/prisma.js';
 
 export const attendEvent = async (req: AuthRequest, res: Response) => {
   const { eventId } = req.params;

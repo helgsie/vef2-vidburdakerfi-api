@@ -1,9 +1,9 @@
-import { AuthRequest } from '../middleware/authMiddleware';
+import { AuthRequest } from '../middleware/authMiddleware.js';
 import { Request, Response } from 'express';
-import prisma from '../prisma/prisma';
-import { createEvent } from '../services/eventService';
+import prisma from '../prisma/prisma.js';
+import { createEvent } from '../services/eventService.js';
 import { v4 as uuidv4 } from 'uuid';
-import cloudinary from '../cloudinaryConfig';
+import cloudinary from '../cloudinaryConfig.js';
 
 export const getEvents = async (req: Request, res: Response) => {
   try {

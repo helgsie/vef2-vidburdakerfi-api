@@ -1,4 +1,3 @@
-import { v2 as cloudinary } from 'cloudinary';
 import multer from 'multer';
 
 const storage = multer.memoryStorage();
