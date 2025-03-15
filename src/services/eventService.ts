@@ -1,4 +1,4 @@
-import prisma from "../prisma/prisma";
+import prisma from "../prisma/prisma.js";
 
 interface EventData {
     titleEn: string;
