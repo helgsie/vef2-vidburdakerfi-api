@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import prisma from '../prisma/prisma';
 import { createEvent } from '../services/eventService';
 import { v4 as uuidv4 } from 'uuid';
+import upload from '../middleware/uploadMiddleware';
 
 export const getEvents = async (req: Request, res: Response) => {
   try {
@@ -42,6 +43,7 @@ export const createEventController = async (req: AuthRequest, res: Response) => 
         return;
     }
 
+    const imageUrl = req.file ? req.file.path : null;
     const eventId = uuidv4();
 
     const eventData = {
@@ -52,6 +54,7 @@ export const createEventController = async (req: AuthRequest, res: Response) => 
         start: new Date(start),
         end: new Date(end),
         owner: req.user.id,
+        image: imageUrl,
     };
 
     const event = await createEvent(eventData);
