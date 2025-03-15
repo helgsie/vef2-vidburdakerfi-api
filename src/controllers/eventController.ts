@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import prisma from '../prisma/prisma';
 import { createEvent } from '../services/eventService';
 import { v4 as uuidv4 } from 'uuid';
-import upload from '../middleware/uploadMiddleware';
+import cloudinary from '../cloudinaryConfig';
 
 export const getEvents = async (req: Request, res: Response) => {
   try {
@@ -37,13 +37,23 @@ export const createEventController = async (req: AuthRequest, res: Response) => 
   const { titleEn, textEn, place, start, end } = req.body;
 
   try {
-
     if (!req.user) {
         res.status(401).json({ message: 'Notandi er ekki með heimild til að búa til viðburði' });
         return;
     }
 
-    const imageUrl = req.file ? req.file.path : null;
+    let imageUrl = null;
+
+    if (req.file) {
+        const uploadedImage = await cloudinary.uploader.upload(
+            req.file.path, {
+                folder: 'event_images',
+                transformation: [{ width: 800, height: 600, crop: 'limit' }],
+            }
+        );
+        imageUrl = uploadedImage.secure_url;
+    }
+
     const eventId = uuidv4();
 
     const eventData = {
