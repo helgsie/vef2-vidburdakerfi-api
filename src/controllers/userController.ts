@@ -1,73 +1,106 @@
-import { AuthRequest } from '../middleware/authMiddleware.js';
-import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import prisma from '../prisma/prisma.js';
+import { Request, Response, NextFunction } from 'express';
+import { PrismaClient } from '@prisma/client';
+import * as userService from '../services/userService.js';
+import { ValidationError } from '../middleware/errorHandler.js';
 
-export const registerUser = async (req: Request, res: Response) => {
-    const { email, name, password } = req.body;
-  
-    try {
-        const userExists = await prisma.user.findUnique({ where: { email } });
+const prisma = new PrismaClient();
 
-        if (userExists) {
-            res.status(400).json({ message: 'Notandi er nú þegar til' });
-            return;
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
+// Sækja prófíl notanda
+export const getUserProfile = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user.id;
+    const user = await userService.getUserById(userId);
     
-        const user = await prisma.user.create({
-            data: { email, name, password: hashedPassword },
-        });
-    
-        res.status(201).json({ id: user.id, email: user.email, name: user.name });
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ message: 'Villa við nýskráningu notanda' });
-        }
+    if (!user) {
+        return res.status(404).json({ message: "Notandi ekki fundinn" });
+    }
+
+    // Skila gögnum notanda án lykilorðs
+    const { password, ...userData } = user;
+    return res.status(200).json(userData);
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const loginUser = async (req: Request, res: Response) => {
-    const { email, password } = req.body;
-  
+// Sækja viðburði sem notandi er skráður á
+export const getUserAttendingEvents = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) {
-            res.status(401).json({ message: 'Rangt netfang eða lykilorð' });
-            return;
-        }
-    
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            res.status(401).json({ message: 'Rangt netfang eða lykilorð' });
-            return;
-        }
-    
-        const token = jwt.sign({ id: user.id, isAdmin: user.isAdmin }, process.env.JWT_SECRET!, { expiresIn: '30d' });
-    
-        res.json({ id: user.id, email: user.email, name: user.name, token });
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ message: 'Villa við innskráningu' });
-        }
-    };
-
-export const getUserProfile = async (req: AuthRequest, res: Response) => {
-    try {
-        const user = await prisma.user.findUnique({
-            where: { id: req.user?.id },
-            select: { id: true, email: true, name: true },
-        });
-    
-        if (!user) {
-            res.status(404).json({ message: 'Notandi ekki fundinn' });
-            return;
-        }
-    
-        res.json(user);
+        const userId = req.user.id;
+        const events = await userService.getUserAttendingEvents(userId);
+        return res.status(200).json(events);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Villa við að sækja prófíl notanda' });
+        next(error);
+    }
+};
+
+// Skrá notanda á viðburð
+export const attendEvent = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user.id;
+        const { eventId } = req.params;
+        
+        // Staðfesta að eventId sé tala
+        const eventIdNum = parseInt(eventId);
+        if (isNaN(eventIdNum)) {
+            throw new ValidationError("Vitlaust ID viðburðar");
+        }
+        
+        const result = await userService.attendEvent(userId, eventIdNum);
+        return res.status(201).json({ message: "Það tókst að skrá notanda á viðburð", data: result });
+    } catch (error) {
+        if (error.code === 'P2002') {
+            return res.status(409).json({ message: "Notandi er þegar skráður á þennan viðburð" });
+        }
+        if (error.code === 'P2025') {
+            return res.status(404).json({ message: "Viðburður fannst ekki" });
+        }
+        next(error);
+    }
+};
+
+// Úrskráning af viðburði
+export const cancelAttendance = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user.id;
+        const { eventId } = req.params;
+        
+        // Staðfesta að eventId sé tala
+        const eventIdNum = parseInt(eventId);
+        if (isNaN(eventIdNum)) {
+            throw new ValidationError("Vitlaust ID viðburðar");
+        }
+        
+        await userService.cancelAttendance(userId, eventIdNum);
+        return res.status(200).json({ message: "Notandi hefur verið skráður á viðburð" });
+    } catch (error) {
+        if (error.code === 'P2025') {
+            return res.status(404).json({ message: "Gögn um skráningu finnast ekki" });
+        }
+        next(error);
+    }
+};
+
+// Uppfæra prófíl notanda
+export const updateUserProfile = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user.id;
+        const { name, email } = req.body;
+        
+        // Staðfesta skyldureiti
+        if (!name && !email) {
+            throw new ValidationError("Krafa er gerð um annað hvort nafn eða netfang");
+        }
+        
+        const updatedUser = await userService.updateUserProfile(userId, { name, email });
+        
+        // Skila gögn um notanda fyrir utan lykilorð
+        const { password, ...userData } = updatedUser;
+        return res.status(200).json({ message: "Prófíll hefur verið uppfærður", data: userData });
+    } catch (error) {
+        if (error.code === 'P2002') {
+            return res.status(409).json({ message: "Aðgangur með þetta netfang er þegar til" });
+        }
+        next(error);
     }
 };
