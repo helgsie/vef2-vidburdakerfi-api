@@ -13,6 +13,8 @@ beforeAll(async () => {
     const userLogin = await loginAsUser();
     adminToken = adminLogin.token;
     userToken = userLogin.token;
+    const event = await createTestEvent(adminToken);
+    testEventId = event.eventId;
 });
 
 afterAll(async () => {
@@ -67,7 +69,7 @@ describe('Events API', () => {
         it('ætti að hafna stofnun viðburðar án auðkenningar', async () => {
             const eventData = {
                 titleEn: 'Óauðkenndur viðburður',
-                textEn: 'Þessi viðburðu á ekki að verða til',
+                textEn: 'Þessi viðburður á ekki að verða til',
                 start: new Date().toISOString()
             };
             const response = await request(app)
@@ -93,14 +95,16 @@ describe('Events API', () => {
     describe('GET /api/events/:eventId', () => {
         it('ætti að sækja ákveðinn viðburð út frá ID', async () => {
             const response = await request(app)
-                .get(`/api/events/${testEventId}`);
+                .get(`/api/events/${testEventId}`)
+                .set('Authorization', `Bearer ${userToken}`);
             expect(response.status).toBe(200);
             expect(response.body).toHaveProperty('eventId', testEventId);
         });
         
         it('ætti að skila 404 fyrir viðburð sem er ekki til', async () => {
             const response = await request(app)
-                .get('/api/events/id-sem-er-ekki-til');
+                .get('/api/events/id-sem-er-ekki-til')
+                .set('Authorization', `Bearer ${userToken}`);
             expect(response.status).toBe(404);
         });
     });
@@ -188,7 +192,7 @@ describe('Events API', () => {
             const response = await request(app)
                 .post(`/api/events/${newEventId}/attend`)
                 .set('Authorization', `Bearer ${userToken}`);
-            expect(response.status).toBe(409); // Conflict status
+            expect(response.status).toBe(409);
         });
         
         it('ætti að leyfa notanda að afskrá sig af viðburði', async () => {

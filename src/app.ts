@@ -6,7 +6,8 @@ import authRoutes from './routes/authRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import { seedAdmin } from './utils/seedAdmin.js';
-import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import fs from 'fs';
 import { errorHandler, notFoundHandler, sanitizeInput, securityHeadersMiddleware } from './middleware/errorHandler.js';
 
@@ -30,8 +31,12 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// Skilgreina __filename og __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 // Búa til möppu fyrir myndaupphleðslu ef hún er ekki til
-const uploadsDir = path.join(__dirname, '../uploads');
+const uploadsDir = join(__dirname, '../uploads');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }

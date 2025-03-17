@@ -29,8 +29,13 @@ export class NotFoundError extends Error {
 }
 // Víðvær villumelding
 export const errorHandler = (err, req, res, next) => {
-    console.error(`Error: ${err.message}`);
-    console.error(err.stack);
+    if (process.env.NODE_ENV === 'development') {
+        console.error(`Error: ${err.message}`);
+        console.error(err.stack);
+    }
+    else {
+        console.error(`Error: ${err.message}`);
+    }
     // Meðhöndlum á skilgreindum villum 400-404
     if (err instanceof ValidationError ||
         err instanceof AuthenticationError ||

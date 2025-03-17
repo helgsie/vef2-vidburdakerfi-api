@@ -24,7 +24,7 @@ describe('Authentication API', () => {
         expect(response.status).toBe(201);
         expect(response.body).toHaveProperty('user');
         expect(response.body.user).toHaveProperty('email', 'newuser@test.com');
-        expect(response.body.user).toHaveProperty('name', 'New User');
+        expect(response.body.user).toHaveProperty('name', 'Nýr notandi');
         expect(response.body.user).not.toHaveProperty('password'); // Lykilorði á ekki að vera skilað
         });
 

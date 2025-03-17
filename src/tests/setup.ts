@@ -21,7 +21,7 @@ export const setupTestDb = async () => {
         ]);
 
         // Búa til prufu admin
-        const hashedPassword = await bcrypt.hash('admin123', 10);
+        const hashedPassword = await bcrypt.hash('Admin123', 10);
         await prisma.user.create({
         data: {
             email: 'admin@test.com',
@@ -32,7 +32,7 @@ export const setupTestDb = async () => {
         });
 
         // Búa til prufu notanda
-        const userPassword = await bcrypt.hash('user123', 10);
+        const userPassword = await bcrypt.hash('Notandi123', 10);
         await prisma.user.create({
         data: {
             email: 'user@test.com',
@@ -42,9 +42,9 @@ export const setupTestDb = async () => {
         }
         });
 
-        console.log('Uppsetningu á gervi gagnagrunni lokið');
+        console.log('Uppsetningu á prufu gagnagrunni lokið');
     } catch (error) {
-        console.error('Villa við uppsetningu á gervi gagnagrunni:', error);
+        console.error('Villa við uppsetningu á prufu gagnagrunni:', error);
         throw error;
     }
 };

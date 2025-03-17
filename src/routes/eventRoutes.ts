@@ -70,11 +70,11 @@ router.post(
   
 /**
  * @route DELETE á /api/events/:eventId/attend
- * @desc Eyðir gest af gestalista viðburðs
+ * @desc Eyðir gesti af gestalista viðburðs
  * @access Notandi/Admin
  */
 router.delete(
-    '/:eventId/attend', 
+    '/:eventId/attend',
     authenticate, 
     eventController.removeAttendee
 );

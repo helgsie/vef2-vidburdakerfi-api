@@ -37,10 +37,10 @@ export declare const getAllEvents: (active?: boolean, limit?: number, offset?: n
     }[];
     image: {
         id: number;
+        small: string | null;
         eventId: number;
         time: number | null;
         path: string | null;
-        small: string | null;
         medium: string | null;
         large: string | null;
         xlarge: string | null;
@@ -110,10 +110,10 @@ export declare const getEventById: (eventId: string) => Promise<{
     }[];
     image: {
         id: number;
+        small: string | null;
         eventId: number;
         time: number | null;
         path: string | null;
-        small: string | null;
         medium: string | null;
         large: string | null;
         xlarge: string | null;
@@ -183,10 +183,10 @@ export declare const createEvent: (eventData: EventCreate, userId: number, image
     }[];
     image: {
         id: number;
+        small: string | null;
         eventId: number;
         time: number | null;
         path: string | null;
-        small: string | null;
         medium: string | null;
         large: string | null;
         xlarge: string | null;
@@ -244,10 +244,10 @@ export declare const updateEvent: (eventId: string, eventData: Partial<EventCrea
     }[];
     image: {
         id: number;
+        small: string | null;
         eventId: number;
         time: number | null;
         path: string | null;
-        small: string | null;
         medium: string | null;
         large: string | null;
         xlarge: string | null;
@@ -343,10 +343,10 @@ export declare const getUserEvents: (userId: number) => Promise<({
     }[];
     image: {
         id: number;
+        small: string | null;
         eventId: number;
         time: number | null;
         path: string | null;
-        small: string | null;
         medium: string | null;
         large: string | null;
         xlarge: string | null;
