@@ -1,0 +1,10 @@
+import { Request, Response, NextFunction } from 'express';
+export declare const isValidEmail: (email: string) => boolean;
+export declare const isStrongPassword: (password: string) => boolean;
+export declare const validateLogin: (req: Request, res: Response, next: NextFunction) => void;
+export declare const validateRegister: (req: Request, res: Response, next: NextFunction) => void;
+export declare const validateCreateEvent: (req: Request, res: Response, next: NextFunction) => void;
+export declare const validateUpdateEvent: (req: Request, res: Response, next: NextFunction) => void;
+export declare const validateAttendEvent: (req: Request, res: Response, next: NextFunction) => void;
+export declare const validateUpdateProfile: (req: Request, res: Response, next: NextFunction) => void;
+export declare const sanitizeBody: (req: Request, res: Response, next: NextFunction) => void;

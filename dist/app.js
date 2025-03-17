@@ -1,19 +1,46 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const dotenv_1 = __importDefault(require("dotenv"));
-const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
-const eventRoutes_1 = __importDefault(require("./routes/eventRoutes"));
-const attendeeRoutes_1 = __importDefault(require("./routes/attendeeRoutes"));
-dotenv_1.default.config();
-const app = (0, express_1.default)();
-app.use((0, cors_1.default)());
-app.use(express_1.default.json());
-app.use('/api/users', userRoutes_1.default);
-app.use('/api/events', eventRoutes_1.default);
-app.use('/api/attendees', attendeeRoutes_1.default);
-exports.default = app;
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import dotenv from 'dotenv';
+import authRoutes from './routes/authRoutes.js';
+import eventRoutes from './routes/eventRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import { seedAdmin } from './utils/seedAdmin.js';
+import path from 'path';
+import fs from 'fs';
+import { errorHandler, notFoundHandler, sanitizeInput, securityHeadersMiddleware } from './middleware/errorHandler.js';
+// Hlaða inn env breytum
+dotenv.config();
+// Búa til Express app
+const app = express();
+// Middleware
+app.use(helmet());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(securityHeadersMiddleware);
+app.use(sanitizeInput);
+// CORS uppsetning
+app.use(cors({
+    origin: process.env.CORS_ORIGIN || '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+// Búa til möppu fyrir myndaupphleðslu ef hún er ekki til
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+// API routes
+app.use('/api/auth', authRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/users', userRoutes);
+// 404 meðhöndlun fyrir óskilgreind routes
+app.use(notFoundHandler);
+// Víðvær villumelding
+app.use(errorHandler);
+// Grunnstilla admin notanda þegar netþjónn er keyrður
+seedAdmin().catch(err => {
+    console.error('Ekki gekk að seeda admin notanda:', err);
+});
+export default app;
+//# sourceMappingURL=app.js.map

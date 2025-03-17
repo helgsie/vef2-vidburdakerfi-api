@@ -1,79 +1,106 @@
-"use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUserProfile = exports.loginUser = exports.registerUser = void 0;
-const bcryptjs_1 = __importDefault(require("bcryptjs"));
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const prisma_1 = __importDefault(require("../prisma/prisma"));
-const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { email, name, password } = req.body;
+import { PrismaClient } from '@prisma/client';
+import * as userService from '../services/userService.js';
+import { ValidationError } from '../middleware/errorHandler.js';
+const prisma = new PrismaClient();
+// Sækja prófíl notanda
+export const getUserProfile = async (req, res, next) => {
     try {
-        const userExists = yield prisma_1.default.user.findUnique({ where: { email } });
-        if (userExists) {
-            res.status(400).json({ message: 'Notandi er nú þegar til' });
-            return;
-        }
-        const hashedPassword = yield bcryptjs_1.default.hash(password, 10);
-        const user = yield prisma_1.default.user.create({
-            data: { email, name, password: hashedPassword },
-        });
-        res.status(201).json({ id: user.id, email: user.email, name: user.name });
-    }
-    catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Villa við nýskráningu notanda' });
-    }
-});
-exports.registerUser = registerUser;
-const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { email, password } = req.body;
-    try {
-        const user = yield prisma_1.default.user.findUnique({ where: { email } });
+        const userId = req.user.id;
+        const user = await userService.getUserById(userId);
         if (!user) {
-            res.status(401).json({ message: 'Rangt netfang eða lykilorð' });
+            res.status(404).json({ message: "Notandi ekki fundinn" });
             return;
         }
-        const isMatch = yield bcryptjs_1.default.compare(password, user.password);
-        if (!isMatch) {
-            res.status(401).json({ message: 'Rangt netfang eða lykilorð' });
-            return;
-        }
-        const token = jsonwebtoken_1.default.sign({ id: user.id, isAdmin: user.isAdmin }, process.env.JWT_SECRET, { expiresIn: '30d' });
-        res.json({ id: user.id, email: user.email, name: user.name, token });
+        // Skila gögnum notanda án lykilorðs
+        const { password, ...userData } = user;
+        res.status(200).json(userData);
+        return;
     }
     catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Villa við innskráningu' });
+        next(error);
     }
-});
-exports.loginUser = loginUser;
-const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+};
+// Sækja viðburði sem notandi er skráður á
+export const getUserAttendingEvents = async (req, res, next) => {
     try {
-        const user = yield prisma_1.default.user.findUnique({
-            where: { id: (_a = req.user) === null || _a === void 0 ? void 0 : _a.id },
-            select: { id: true, email: true, name: true },
-        });
-        if (!user) {
-            res.status(404).json({ message: 'Notandi ekki fundinn' });
-            return;
-        }
-        res.json(user);
+        const userId = req.user.id;
+        const events = await userService.getUserAttendingEvents(userId);
+        res.status(200).json(events);
+        return;
     }
     catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Villa við að sækja prófíl notanda' });
+        next(error);
     }
-});
-exports.getUserProfile = getUserProfile;
+};
+// Skrá notanda á viðburð
+export const attendEvent = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        const { eventId } = req.params;
+        // Staðfesta að eventId sé tala
+        const eventIdNum = parseInt(eventId);
+        if (isNaN(eventIdNum)) {
+            throw new ValidationError("Vitlaust ID viðburðar");
+        }
+        const result = await userService.attendEvent(userId, eventIdNum);
+        res.status(201).json({ message: "Það tókst að skrá notanda á viðburð", data: result });
+        return;
+    }
+    catch (error) {
+        if (error.code === 'P2002') {
+            res.status(409).json({ message: "Notandi er þegar skráður á þennan viðburð" });
+            return;
+        }
+        if (error.code === 'P2025') {
+            res.status(404).json({ message: "Viðburður fannst ekki" });
+            return;
+        }
+        next(error);
+    }
+};
+// Úrskráning af viðburði
+export const cancelAttendance = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        const { eventId } = req.params;
+        // Staðfesta að eventId sé tala
+        const eventIdNum = parseInt(eventId);
+        if (isNaN(eventIdNum)) {
+            throw new ValidationError("Vitlaust ID viðburðar");
+        }
+        await userService.cancelAttendance(userId, eventIdNum);
+        res.status(200).json({ message: "Notandi hefur verið skráður á viðburð" });
+        return;
+    }
+    catch (error) {
+        if (error.code === 'P2025') {
+            res.status(404).json({ message: "Gögn um skráningu finnast ekki" });
+            return;
+        }
+        next(error);
+    }
+};
+// Uppfæra prófíl notanda
+export const updateUserProfile = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        const { name, email } = req.body;
+        // Staðfesta skyldureiti
+        if (!name && !email) {
+            throw new ValidationError("Krafa er gerð um annað hvort nafn eða netfang");
+        }
+        const updatedUser = await userService.updateUserProfile(userId, { name, email });
+        // Skila gögn um notanda fyrir utan lykilorð
+        const { password, ...userData } = updatedUser;
+        res.status(200).json({ message: "Prófíll hefur verið uppfærður", data: userData });
+        return;
+    }
+    catch (error) {
+        if (error.code === 'P2002') {
+            res.status(409).json({ message: "Aðgangur með þetta netfang er þegar til" });
+            return;
+        }
+        next(error);
+    }
+};
+//# sourceMappingURL=userController.js.map

@@ -1,92 +1,218 @@
-"use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteEvent = exports.createEventController = exports.getEventById = exports.getEvents = void 0;
-const prisma_1 = __importDefault(require("../prisma/prisma"));
-const eventService_1 = require("../services/eventService");
-const uuid_1 = require("uuid");
-const getEvents = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+import * as eventService from '../services/eventService.js';
+import prisma from '../config/database.js';
+export const getAllEvents = async (req, res) => {
     try {
-        const events = yield prisma_1.default.event.findMany();
-        res.json(events);
+        const active = req.query.active === 'true' ? true :
+            req.query.active === 'false' ? false : undefined;
+        const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
+        const offset = req.query.offset ? parseInt(req.query.offset) : undefined;
+        const events = await eventService.getAllEvents(active, limit, offset);
+        res.status(200).json(events);
     }
     catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Villa við að sækja viðburði' });
+        console.error('Villa við að sækja viðburði:', error);
+        res.status(500).json({ error: 'Tókst ekki að sækja viðburði' });
     }
-});
-exports.getEvents = getEvents;
-const getEventById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { id } = req.params;
+};
+export const getEventById = async (req, res) => {
     try {
-        const event = yield prisma_1.default.event.findUnique({ where: { id: Number(id) } });
-        if (!event) {
-            res.status(404).json({ message: 'Viðburður ekki fundinn' });
+        const { eventId } = req.params;
+        const event = await eventService.getEventById(eventId);
+        res.status(200).json(event);
+    }
+    catch (error) {
+        if (error instanceof Error && error.message === 'Viðburður ekki fundinn') {
+            res.status(404).json({ error: error.message });
             return;
         }
-        res.json(event);
-    }
-    catch (error) {
-        console.error(error);
         res.status(500).json({ message: 'Villa við að sækja viðburð' });
     }
-});
-exports.getEventById = getEventById;
-const createEventController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { titleEn, textEn, place, start, end } = req.body;
+};
+export const createEvent = async (req, res) => {
     try {
         if (!req.user) {
-            res.status(401).json({ message: 'Notandi er ekki með heimild til að búa til viðburði' });
+            res.status(401).json({ error: 'Auðkenningu krafist' });
             return;
         }
-        const eventId = (0, uuid_1.v4)();
+        // Hreinsa og staðfesta innslegin gögn
         const eventData = {
-            eventId,
-            titleEn,
-            textEn,
-            place,
-            start: new Date(start),
-            end: new Date(end),
-            owner: req.user.id,
+            titleIs: req.body.titleIs,
+            titleEn: req.body.titleEn,
+            textIs: req.body.textIs,
+            textEn: req.body.textEn,
+            place: req.body.place,
+            formattedAddress: req.body.formattedAddress,
+            city: req.body.city,
+            postal: req.body.postal,
+            street: req.body.street,
+            start: req.body.start ? new Date(req.body.start) : undefined,
+            end: req.body.end ? new Date(req.body.end) : undefined,
+            occurrence: req.body.occurrence,
+            active: req.body.active === true,
+            website: req.body.website,
+            facebook: req.body.facebook,
+            tickets: req.body.tickets,
+            tags: Array.isArray(req.body.tags) ? req.body.tags : undefined,
+            location: req.body.location ? {
+                latitude: parseFloat(req.body.location.latitude),
+                longitude: parseFloat(req.body.location.longitude)
+            } : undefined,
+            dates: Array.isArray(req.body.dates) ?
+                req.body.dates.map((date) => new Date(date)) : undefined
         };
-        const event = yield (0, eventService_1.createEvent)(eventData);
+        // Staðfesta skyldureiti
+        if (!eventData.titleEn && !eventData.titleIs) {
+            res.status(400).json({ error: 'Viðburður verður að hafa titil í að minnsta einu tungumáli' });
+            return;
+        }
+        const event = await eventService.createEvent(eventData, req.user.id, req.file);
         res.status(201).json(event);
     }
     catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Villa við að búa til viðburð' });
+        console.error('Villa við að búa til viðburð:', error);
+        res.status(500).json({ error: 'Villa kom upp við að búa til viðburð' });
     }
-});
-exports.createEventController = createEventController;
-const deleteEvent = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { id } = req.params;
+};
+export const updateEvent = async (req, res) => {
     try {
-        const event = yield prisma_1.default.event.findUnique({ where: { id: Number(id) } });
-        if (!event) {
-            res.status(404).json({ message: 'Viðburður ekki fundinn' });
+        const { eventId } = req.params;
+        if (!req.user) {
+            res.status(401).json({ error: 'Auðkenningar krafist' });
             return;
         }
-        if (!req.user || (event.owner !== req.user.id && !req.user.isAdmin)) {
-            res.status(403).json({ message: 'Notandi hefur ekki heimild til að eyða viðburði' });
-            return;
-        }
-        yield prisma_1.default.event.delete({ where: { id: Number(id) } });
-        res.json({ message: 'Viðburði hefur verið eytt' });
+        // Hreinsa og staðfesta innslegin gögn
+        const eventData = {
+            titleIs: req.body.titleIs,
+            titleEn: req.body.titleEn,
+            textIs: req.body.textIs,
+            textEn: req.body.textEn,
+            place: req.body.place,
+            formattedAddress: req.body.formattedAddress,
+            city: req.body.city,
+            postal: req.body.postal,
+            street: req.body.street,
+            start: req.body.start ? new Date(req.body.start) : undefined,
+            end: req.body.end ? new Date(req.body.end) : undefined,
+            occurrence: req.body.occurrence,
+            active: req.body.active !== undefined ? req.body.active === true : undefined,
+            website: req.body.website,
+            facebook: req.body.facebook,
+            tickets: req.body.tickets,
+            tags: Array.isArray(req.body.tags) ? req.body.tags : undefined,
+            location: req.body.location ? {
+                latitude: parseFloat(req.body.location.latitude),
+                longitude: parseFloat(req.body.location.longitude)
+            } : undefined,
+            dates: Array.isArray(req.body.dates) ?
+                req.body.dates.map((date) => new Date(date)) : undefined
+        };
+        const event = await eventService.updateEvent(eventId, eventData, req.file);
+        res.status(200).json(event);
     }
     catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Villa við að eyða viðburði' });
+        if (error instanceof Error && error.message === 'Viðburður ekki fundinn') {
+            res.status(404).json({ error: error.message });
+            return;
+        }
+        console.error('Villa við að uppfæra viðburð:', error);
+        res.status(500).json({ error: 'Villa kom upp við að uppfæra viðburð' });
     }
-});
-exports.deleteEvent = deleteEvent;
+};
+export const deleteEvent = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const result = await eventService.deleteEvent(eventId);
+        res.status(200).json(result);
+    }
+    catch (error) {
+        if (error instanceof Error && error.message === 'Viðburður ekki fundinn') {
+            res.status(404).json({ error: error.message });
+            return;
+        }
+        console.error('Villa við að eyða viðburði:', error);
+        res.status(500).json({ error: 'Villa kom upp við að eyða viðburði' });
+    }
+};
+export const addAttendee = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        if (!req.user) {
+            res.status(401).json({ error: 'Auðkenningar krafist' });
+            return;
+        }
+        // Athuga hvort viðburður sé til
+        const event = await eventService.getEventById(eventId);
+        // Athuga hvort notandi sé þegar skráður á viðburð
+        const existingAttendee = await prisma.eventAttendee.findUnique({
+            where: {
+                userId_eventId: {
+                    userId: req.user.id,
+                    eventId: event.id
+                }
+            }
+        });
+        if (existingAttendee) {
+            res.status(409).json({ error: 'Notandi er þegar skráður á viðburð' });
+            return;
+        }
+        // Bæta notanda við sem gest
+        const attendee = await prisma.eventAttendee.create({
+            data: {
+                userId: req.user.id,
+                eventId: event.id
+            },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true
+                    }
+                }
+            }
+        });
+        res.status(201).json({
+            message: 'Notandi hefur verið skráður á gestalista',
+            attendee
+        });
+    }
+    catch (error) {
+        if (error instanceof Error && error.message === 'Viðburður ekki fundinn') {
+            res.status(404).json({ error: error.message });
+            return;
+        }
+        console.error('Villa við að bæta notanda við á gestalista:', error);
+        res.status(500).json({ error: 'Ekki tókst að skrá notanda á viðburð' });
+    }
+};
+// Eyða notanda af gestalista
+export const removeAttendee = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        if (!req.user) {
+            res.status(401).json({ error: 'Authentication required' });
+            return;
+        }
+        // Athuga hvort viðburðurinn sé til
+        const event = await eventService.getEventById(eventId);
+        // Eyða ummerki um að notandi sé gestur fyrir viðburð
+        await prisma.eventAttendee.deleteMany({
+            where: {
+                userId: req.user.id,
+                eventId: event.id
+            }
+        });
+        res.status(200).json({
+            message: 'Gestur hefur verið fjarlægður af gestalista'
+        });
+    }
+    catch (error) {
+        if (error instanceof Error && error.message === 'Viðburður ekki fundinn') {
+            res.status(404).json({ error: error.message });
+            return;
+        }
+        console.error('Villa við að fjarlægja gest af gestalista:', error);
+        res.status(500).json({ error: 'Ekki tókst að fjarlægja gest af gestalista' });
+    }
+};
+//# sourceMappingURL=eventController.js.map
