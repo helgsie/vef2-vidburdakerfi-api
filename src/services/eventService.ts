@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import prisma from "../prisma/prisma.js";
+import prisma from "../config/database.js";
 import cloudinary from '../config/cloudinary.js';
 import fs from 'fs';
 

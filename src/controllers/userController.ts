@@ -12,12 +12,14 @@ export const getUserProfile = async (req: Request, res: Response, next: NextFunc
     const user = await userService.getUserById(userId);
     
     if (!user) {
-        return res.status(404).json({ message: "Notandi ekki fundinn" });
+        res.status(404).json({ message: "Notandi ekki fundinn" });
+        return;
     }
 
     // Skila gögnum notanda án lykilorðs
     const { password, ...userData } = user;
-    return res.status(200).json(userData);
+    res.status(200).json(userData);
+    return;
   } catch (error) {
     next(error);
   }
@@ -28,7 +30,8 @@ export const getUserAttendingEvents = async (req: Request, res: Response, next: 
     try {
         const userId = req.user.id;
         const events = await userService.getUserAttendingEvents(userId);
-        return res.status(200).json(events);
+        res.status(200).json(events);
+        return;
     } catch (error) {
         next(error);
     }
@@ -47,13 +50,16 @@ export const attendEvent = async (req: Request, res: Response, next: NextFunctio
         }
         
         const result = await userService.attendEvent(userId, eventIdNum);
-        return res.status(201).json({ message: "Það tókst að skrá notanda á viðburð", data: result });
+        res.status(201).json({ message: "Það tókst að skrá notanda á viðburð", data: result });
+        return;
     } catch (error) {
-        if (error.code === 'P2002') {
-            return res.status(409).json({ message: "Notandi er þegar skráður á þennan viðburð" });
+        if ((error as any).code === 'P2002') {
+            res.status(409).json({ message: "Notandi er þegar skráður á þennan viðburð" });
+            return;
         }
-        if (error.code === 'P2025') {
-            return res.status(404).json({ message: "Viðburður fannst ekki" });
+        if ((error as any).code === 'P2025') {
+            res.status(404).json({ message: "Viðburður fannst ekki" });
+            return;
         }
         next(error);
     }
@@ -72,10 +78,12 @@ export const cancelAttendance = async (req: Request, res: Response, next: NextFu
         }
         
         await userService.cancelAttendance(userId, eventIdNum);
-        return res.status(200).json({ message: "Notandi hefur verið skráður á viðburð" });
+        res.status(200).json({ message: "Notandi hefur verið skráður á viðburð" });
+        return;
     } catch (error) {
-        if (error.code === 'P2025') {
-            return res.status(404).json({ message: "Gögn um skráningu finnast ekki" });
+        if ((error as any).code === 'P2025') {
+            res.status(404).json({ message: "Gögn um skráningu finnast ekki" });
+            return;
         }
         next(error);
     }
@@ -96,10 +104,12 @@ export const updateUserProfile = async (req: Request, res: Response, next: NextF
         
         // Skila gögn um notanda fyrir utan lykilorð
         const { password, ...userData } = updatedUser;
-        return res.status(200).json({ message: "Prófíll hefur verið uppfærður", data: userData });
+        res.status(200).json({ message: "Prófíll hefur verið uppfærður", data: userData });
+        return;
     } catch (error) {
-        if (error.code === 'P2002') {
-            return res.status(409).json({ message: "Aðgangur með þetta netfang er þegar til" });
+        if ((error as any).code === 'P2002') {
+            res.status(409).json({ message: "Aðgangur með þetta netfang er þegar til" });
+            return;
         }
         next(error);
     }

@@ -28,7 +28,8 @@ export const getEventById = async (req: Request, res: Response) => {
     
   } catch (error) {
     if (error instanceof Error && error.message === 'Viðburður ekki fundinn') {
-        return res.status(404).json({ error: error.message });
+        res.status(404).json({ error: error.message });
+        return;
     }
 
     res.status(500).json({ message: 'Villa við að sækja viðburð' });
@@ -38,7 +39,8 @@ export const getEventById = async (req: Request, res: Response) => {
 export const createEvent = async (req: Request, res: Response) => {
     try {
         if (!req.user) {
-            return res.status(401).json({ error: 'Auðkenningu krafist' });
+            res.status(401).json({ error: 'Auðkenningu krafist' });
+            return;
         }
         
         // Hreinsa og staðfesta innslegin gögn
@@ -70,7 +72,8 @@ export const createEvent = async (req: Request, res: Response) => {
         
         // Staðfesta skyldureiti
         if (!eventData.titleEn && !eventData.titleIs) {
-            return res.status(400).json({ error: 'Viðburður verður að hafa titil í að minnsta einu tungumáli' });
+            res.status(400).json({ error: 'Viðburður verður að hafa titil í að minnsta einu tungumáli' });
+            return;
         }
         
         const event = await eventService.createEvent(
@@ -91,7 +94,8 @@ export const updateEvent = async (req: Request, res: Response) => {
         const { eventId } = req.params;
         
         if (!req.user) {
-            return res.status(401).json({ error: 'Auðkenningar krafist' });
+            res.status(401).json({ error: 'Auðkenningar krafist' });
+            return;
         }
         
         // Hreinsa og staðfesta innslegin gögn
@@ -130,7 +134,8 @@ export const updateEvent = async (req: Request, res: Response) => {
         res.status(200).json(event);
     } catch (error) {
         if (error instanceof Error && error.message === 'Viðburður ekki fundinn') {
-            return res.status(404).json({ error: error.message });
+            res.status(404).json({ error: error.message });
+            return;
         }
         console.error('Villa við að uppfæra viðburð:', error);
         res.status(500).json({ error: 'Villa kom upp við að uppfæra viðburð' });
@@ -146,7 +151,8 @@ export const deleteEvent = async (req: Request, res: Response) => {
         res.status(200).json(result);
     } catch (error) {
         if (error instanceof Error && error.message === 'Viðburður ekki fundinn') {
-            return res.status(404).json({ error: error.message });
+            res.status(404).json({ error: error.message });
+            return;
         }
         console.error('Villa við að eyða viðburði:', error);
         res.status(500).json({ error: 'Villa kom upp við að eyða viðburði' });
@@ -158,7 +164,8 @@ export const addAttendee = async (req: Request, res: Response) => {
         const { eventId } = req.params;
         
         if (!req.user) {
-            return res.status(401).json({ error: 'Auðkenningar krafist' });
+            res.status(401).json({ error: 'Auðkenningar krafist' });
+            return;
         }
         
         // Athuga hvort viðburður sé til
@@ -175,7 +182,8 @@ export const addAttendee = async (req: Request, res: Response) => {
         });
         
         if (existingAttendee) {
-            return res.status(409).json({ error: 'Notandi er þegar skráður á viðburð' });
+            res.status(409).json({ error: 'Notandi er þegar skráður á viðburð' });
+            return;
         }
         
         // Bæta notanda við sem gest
@@ -201,7 +209,8 @@ export const addAttendee = async (req: Request, res: Response) => {
         });
     } catch (error) {
         if (error instanceof Error && error.message === 'Viðburður ekki fundinn') {
-            return res.status(404).json({ error: error.message });
+            res.status(404).json({ error: error.message });
+            return;
         }
         console.error('Villa við að bæta notanda við á gestalista:', error);
         res.status(500).json({ error: 'Ekki tókst að skrá notanda á viðburð' });
@@ -214,7 +223,8 @@ export const removeAttendee = async (req: Request, res: Response) => {
         const { eventId } = req.params;
         
         if (!req.user) {
-            return res.status(401).json({ error: 'Authentication required' });
+            res.status(401).json({ error: 'Authentication required' });
+            return;
         }
         
         // Athuga hvort viðburðurinn sé til
@@ -233,7 +243,8 @@ export const removeAttendee = async (req: Request, res: Response) => {
         });
     } catch (error) {
         if (error instanceof Error && error.message === 'Viðburður ekki fundinn') {
-            return res.status(404).json({ error: error.message });
+            res.status(404).json({ error: error.message });
+            return;
         }
         console.error('Villa við að fjarlægja gest af gestalista:', error);
         res.status(500).json({ error: 'Ekki tókst að fjarlægja gest af gestalista' });

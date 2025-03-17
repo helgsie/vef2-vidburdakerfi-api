@@ -1,18 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import prisma from '../config/database.js';
+import { PrismaClient } from '@prisma/client';
+import { AuthenticationError, AuthorizationError } from './errorHandler.js';
 
-interface JwtPayload {
-  userId: number;
-}
+const prisma = new PrismaClient();
 
 declare global {
   namespace Express {
     interface Request {
-      user?: {
-        id: number;
-        isAdmin: boolean;
-      };
+      user?: any;
     }
   }
 }
@@ -20,44 +16,55 @@ declare global {
 export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Auðkenningar krafist' });
+      throw new AuthenticationError('Auðkenningar krafist');
     }
 
     const token = authHeader.split(' ')[1];
+
     if (!token) {
-      return res.status(401).json({ error: 'Vantar auðkenningar token' });
+      throw new AuthenticationError('Vantar auðkenningar token');
     }
 
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
-      return res.status(500).json({ error: 'Villa við að setja upp netþjón' });
+      res.status(500).json({ error: 'Villa við að setja upp netþjón' });
+      return;
     }
 
-    const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
     
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: { id: true, isAdmin: true }
+      where: { id: decoded.userId }
     });
 
     if (!user) {
-      return res.status(401).json({ error: 'Notandi ekki fundinn' });
+      throw new AuthenticationError('Notandi ekki fundinn');
     }
 
-    req.user = user;
+    req.user = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      isAdmin: user.isAdmin
+    };
+
     next();
   } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      return res.status(401).json({ error: 'Rangur eða útrunninn token' });
+    if (error instanceof jwt.JsonWebTokenError || error instanceof jwt.TokenExpiredError) {
+      next(new AuthenticationError('Rangur eða útrunninn token'));
+      return;
     }
-    return res.status(500).json({ error: 'Villa við auðkenningu' });
+    next(error);
   }
+
 };
 
 export const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
   if (!req.user || !req.user.isAdmin) {
-    return res.status(403).json({ error: 'Aðgerð krefst admin réttinda' });
+    next(new AuthorizationError('Aðgerð krefst admin réttinda'));
+    return;
   }
   next();
 };

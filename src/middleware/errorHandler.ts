@@ -51,10 +51,11 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
         err instanceof AuthenticationError || 
         err instanceof AuthorizationError ||
         err instanceof NotFoundError) {
-        return res.status(err.statusCode).json({
+        res.status(err.statusCode).json({
             error: err.name,
             message: err.message
         });
+        return;
     }
     
     // Meðhöndlun á Prisma villum
@@ -63,51 +64,57 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
         
         // P2002: "Unique constraint violation"
         if (prismaError.code === 'P2002') {
-            return res.status(409).json({
+            res.status(409).json({
                 error: 'Conflict',
                 message: `Gögn með þetta ${prismaError.meta?.target || 'field'} eru þegar til.`
             });
+            return;
         }
         
         // P2025: "Record not found"
         if (prismaError.code === 'P2025') {
-            return res.status(404).json({
+            res.status(404).json({
                 error: 'NotFound',
                 message: 'Umbeðin gögn fundust ekki.'
             });
+            return;
         }
     }
     
     // Senda frekari upplýsingar fyrir ómeðhöndlaðar villur í development
     if (process.env.NODE_ENV === 'development') {
-        return res.status(500).json({
+        res.status(500).json({
         error: err.name,
         message: err.message,
         stack: err.stack
         });
+        return;
     }
     
     // Senda almenna villumeldingu fyrir production
-    return res.status(500).json({
+    res.status(500).json({
         error: 'InternalServerError',
         message: 'Eitthvað fór úrskeiðis. Vinsamlegast reyndu aftur síðar.'
     });
+    return;
 };
 
 // 404 villumelding fyrir óskilgreind routes
-export const notFoundHandler = (req: Request, res: Response) => {
-  return res.status(404).json({
-    error: 'NotFound',
-    message: 'Umbeðin gögn fundust ekki'
-  });
+export const notFoundHandler = (req: Request, res: Response, next: NextFunction) => {
+    res.status(404).json({
+        error: 'NotFound',
+        message: 'Umbeðin gögn fundust ekki'
+        });
+    return;
 };
 
 // Villumelding fyrir of margar fyrirspurnir á stuttum tíma
 export const rateLimitHandler = (req: Request, res: Response) => {
-  return res.status(429).json({
+  res.status(429).json({
     error: 'TooManyRequests',
     message: 'Of margar fyrirspurnir, vinsamlegast reyndu aftur síðar'
   });
+  return;
 };
 
 // Hreinsun á innslegnum gögnum af öryggisástæðum

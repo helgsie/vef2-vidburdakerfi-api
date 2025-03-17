@@ -7,17 +7,20 @@ export const signup = async (req: Request, res: Response) => {
 
         // Staðfesting á innslegnum gögnum
         if (!email || !name || !password) {
-            return res.status(400).json({ error: 'Netfang, nafn og lykilorðs er krafist' });
+            res.status(400).json({ error: 'Netfang, nafn og lykilorðs er krafist' });
+            return;
         }
 
         if (password.length < 8) {
-            return res.status(400).json({ error: 'Lykilorð verður að innihalda 8+ stafi' });
+            res.status(400).json({ error: 'Lykilorð verður að innihalda 8+ stafi' });
+            return;
         }
 
         // Staðfesting á sniði netfangs
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            return res.status(400).json({ error: 'Rangt snið á netfangi' });
+            res.status(400).json({ error: 'Rangt snið á netfangi' });
+            return;
         }
 
         const user = await authService.signup(email, name, password);
@@ -28,7 +31,8 @@ export const signup = async (req: Request, res: Response) => {
         });
     } catch (error) {
         if (error instanceof Error && error.message === 'Netfang er þegar í notkun') {
-            return res.status(409).json({ error: error.message });
+            res.status(409).json({ error: error.message });
+            return;
         }
         res.status(500).json({ error: 'Villa við að stofna notandaaðgang' });
     }
@@ -40,7 +44,8 @@ export const login = async (req: Request, res: Response) => {
 
         // Staðfesting á innslegnum gögnum
         if (!email || !password) {
-            return res.status(400).json({ error: 'Innskráning krefst netfangs og lykilorðs' });
+            res.status(400).json({ error: 'Innskráning krefst netfangs og lykilorðs' });
+            return;
         }
 
         const result = await authService.login(email, password);
@@ -51,7 +56,8 @@ export const login = async (req: Request, res: Response) => {
         });
     } catch (error) {
         if (error instanceof Error && error.message === 'Invalid credentials') {
-            return res.status(401).json({ error: error.message });
+            res.status(401).json({ error: error.message });
+            return;
         }
         res.status(500).json({ error: 'Innskráning mistókst' });
     }
