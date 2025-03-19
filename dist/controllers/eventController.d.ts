@@ -6,3 +6,4 @@ export declare const updateEvent: (req: Request, res: Response) => Promise<void>
 export declare const deleteEvent: (req: Request, res: Response) => Promise<void>;
 export declare const addAttendee: (req: Request, res: Response) => Promise<void>;
 export declare const removeAttendee: (req: Request, res: Response) => Promise<void>;
+export declare const getEventAttendees: (req: Request, res: Response, next: Function) => Promise<void>;

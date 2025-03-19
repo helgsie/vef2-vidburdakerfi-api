@@ -250,3 +250,22 @@ export const removeAttendee = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Ekki tókst að fjarlægja gest af gestalista' });
     }
 };
+
+export const getEventAttendees = async (req: Request, res: Response, next: Function) => {
+    try {
+        const { eventId } = req.params;
+        const attendees = await prisma.eventAttendee.findMany({
+            where: { eventId: parseInt(eventId) },
+            include: { user: true }
+        });
+
+        if (!attendees) {
+            res.status(404).json({ message: 'Gestalisti fannst ekki' });
+            return;
+        }
+
+        res.status(200).json(attendees);
+    } catch (error) {
+        next(error);
+    }
+};

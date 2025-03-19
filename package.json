@@ -10,7 +10,8 @@
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "lint": "eslint ./src/**/*.ts",
     "prisma:generate": "npx prisma generate",
-    "prisma:migrate": "npx prisma migrate dev --name init"
+    "prisma:migrate": "npx prisma migrate dev --name init",
+    "seed": "ts-node prisma/seed.ts"
   },
   "keywords": [],
   "author": "",

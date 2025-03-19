@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import prisma from "../config/database.js";
 import cloudinary from '../config/cloudinary.js';
 import fs from 'fs';
@@ -73,7 +72,8 @@ export const getEventById = async (eventId) => {
 };
 // Búa til viðburð
 export const createEvent = async (eventData, userId, imageFile) => {
-    const eventId = uuidv4();
+    let counter = 0;
+    const eventId = `${counter++}`;
     let uploadResult = null;
     let imageId = null;
     try {

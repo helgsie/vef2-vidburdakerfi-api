@@ -79,4 +79,16 @@ router.delete(
     eventController.removeAttendee
 );
 
+/**
+ * @route GET á /api/events/:eventId/attendees
+ * @desc Sækir gestalista viðburðs
+ * @access Einungis Admin
+ */
+router.get(
+    '/:eventId/attendees',
+    authenticate,
+    requireAdmin,
+    eventController.getEventAttendees
+);
+
 export default router;

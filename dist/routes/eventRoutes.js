@@ -41,9 +41,15 @@ router.delete('/:eventId', authenticate, requireAdmin, eventController.deleteEve
 router.post('/:eventId/attend', authenticate, eventController.addAttendee);
 /**
  * @route DELETE á /api/events/:eventId/attend
- * @desc Eyðir gest af gestalista viðburðs
+ * @desc Eyðir gesti af gestalista viðburðs
  * @access Notandi/Admin
  */
 router.delete('/:eventId/attend', authenticate, eventController.removeAttendee);
+/**
+ * @route GET á /api/events/:eventId/attendees
+ * @desc Sækir gestalista viðburðs
+ * @access Einungis Admin
+ */
+router.get('/:eventId/attendees', authenticate, requireAdmin, eventController.getEventAttendees);
 export default router;
 //# sourceMappingURL=eventRoutes.js.map

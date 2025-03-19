@@ -117,7 +117,7 @@ export const getEventById = async (eventId: string) => {
     }
     
     return event;
-  };
+};
 
 // Búa til viðburð
 export const createEvent = async (eventData: EventCreate, userId: number, imageFile?: Express.Multer.File) => {
