@@ -295,6 +295,7 @@ export const updateEvent = async (
             
             // Hlaða upp nýrri mynd
             uploadResult = await cloudinary.uploader.upload(imageFile.path, {
+                overwrite: true,
                 folder: 'events',
                 resource_type: 'image',
                 transformation: [

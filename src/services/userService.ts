@@ -65,6 +65,7 @@ export const cancelAttendance = async (userId: number, eventId: number): Promise
 export interface UpdateProfileData {
     name?: string;
     email?: string;
+    imageUrl?: string;
 }
 
 export const updateUserProfile = async (userId: number, data: UpdateProfileData): Promise<User> => {

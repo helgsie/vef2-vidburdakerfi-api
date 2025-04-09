@@ -27,7 +27,7 @@ export const getEventById = async (req: Request, res: Response) => {
     res.status(200).json(event);
     
   } catch (error) {
-    if (error instanceof Error && error.message === 'Viðburður ekki fundinn') {
+    if (error instanceof Error && error.message === 'Viðburður finnst ekki') {
         res.status(404).json({ error: error.message });
         return;
     }
