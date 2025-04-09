@@ -26,7 +26,7 @@ app.use(sanitizeInput);
 
 // CORS uppsetning
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: ['http://localhost:3000', 'https://vef2-vidburdakerfi.onrender.com'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
